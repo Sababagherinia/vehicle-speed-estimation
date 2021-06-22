@@ -1,0 +1,3 @@
+tensorflow==2.5.0
+cvlib==0.2.5
+opencv-contrib-python==3.4.13.47

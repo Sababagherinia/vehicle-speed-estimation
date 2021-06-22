@@ -1,4 +1,5 @@
 import cv2
+import cvlib as cv
 import vehicle
 import numpy as np
 import math
@@ -6,9 +7,9 @@ cars_cascade = cv2.CascadeClassifier('haarcascade_car.xml')
 object_detector = cv2.createBackgroundSubtractorMOG2(history=100, varThreshold=40, detectShadows=True)
 
 
-def get_center(x, y, w, h):
-    cx = int((x+(x + w))/2)
-    cy = int((y+(y + h))/2)
+def get_center(x, y, x1, y1):
+    cx = int((x+x1)/2)
+    cy = int((y+y1)/2)
     return cx, cy
 
 
@@ -16,6 +17,15 @@ def detect_cars(frame):
     # frame_cropped = frame[100:int(frame.shape[1]/1.5), :, :]
     cars = cars_cascade.detectMultiScale(frame, 1.05, 6)
     return cars
+
+
+def yolo_detector(frame):
+    bbox, label, conf = cv.detect_common_objects(frame)
+    detection = []
+    for i in enumerate(bbox):
+        if label[i] == 'car' and conf[i] >= 0.92:
+            detection.append(bbox[i])
+    return detection
 
 
 def detector_subtract(frame):
@@ -66,11 +76,12 @@ def real_time():
         # num_of_cars = len(cars)
         # print(num_of_cars)
         # Detection
-        detected, mask = detector_subtract(frame)
+        # detected, mask = detector_subtract(frame)
         # detected = detect_cars(frame)
+        detected = yolo_detector(frame)
         for item in detected:
             x, y, w, h = item
-            bb = [x, y, x+y, y+h]
+            bb = [x, y, x+w, y+h]
             cx, cy = get_center(x, y, w, h)
             new = True
             if y in range(down_limit, up_limit):
@@ -79,14 +90,14 @@ def real_time():
                     # ok, bbox = car.tracker.update(frame)
                     # print(car.id)
                     dist = math.hypot(cx - car.tracks[-1][0], cy - car.tracks[-1][1])
-                    if dist>25:
+                    if dist<25:
                         new = False
                         car.updateCoord(x, y, w, h)
                         car.age_plus()
 
                         if car.age > car.min_age and car.is_moving():
                             # print(car.id, car.tracks[-2][1])
-                            cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
+                            cv2.rectangle(frame, (x, y), (w, h), color=(0, 255, 0), thickness=2)
                             cv2.putText(frame, str(car.id), (x, y + 5), FONT, 1, (0, 0, 255))
                             # print(car.getY(), up_limit)
                     if not car.done:
@@ -109,7 +120,7 @@ def real_time():
                     pid += 1
         # Display
         cv2.putText(frame, f"OUT:{count}", (50, 40), FONT, 1, (0, 255, 0), 1)
-        cv2.imshow('mask', mask)
+        # cv2.imshow('mask', mask)
         cv2.imshow('frame', frame)
         if cv2.waitKey(40) & 0xFF == ord('q'):
             break

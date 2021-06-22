@@ -37,10 +37,10 @@ class Car:
         self.done = True
 
     def updateCoord(self, xn, yn, w, h):
-        self.x = (xn+w+xn)/2
-        self.y = (yn+h+yn)/2
+        self.x = (xn+w)/2
+        self.y = (yn+h)/2
         # dist = math.hypot(self.x - self.tracks[-1][2], self.y - self.tracks[-1][1])
-        self.tracks.append([(xn+w+xn)/2, (yn+h+yn)/2])
+        self.tracks.append([(xn+w)/2, (yn+h)/2])
 
     def timed_out(self):
         return self.done
