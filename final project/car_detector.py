@@ -115,7 +115,7 @@ def real_time():
 
                 if new:
                     newCar = vehicle.Car(pid, x, y, min_age)
-                    # newCar.tracker.init(frame, bb)
+                    newCar.tracker.init(frame, bb)
                     cars.append(newCar)
                     pid += 1
         # Display
