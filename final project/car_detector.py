@@ -22,7 +22,7 @@ def detect_cars(frame):
 def yolo_detector(frame):
     bbox, label, conf = cv.detect_common_objects(frame)
     detection = []
-    for i in enumerate(bbox):
+    for i in len(bbox):
         if label[i] == 'car' and conf[i] >= 0.92:
             detection.append(bbox[i])
     return detection
