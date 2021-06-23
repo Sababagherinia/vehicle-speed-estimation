@@ -87,10 +87,10 @@ def real_time():
             if y in range(down_limit, up_limit):
                 for car in cars:
                     # Tracking
-                    # ok, bbox = car.tracker.update(frame)
+                    ok, bbox = car.tracker.update(frame)
                     # print(car.id)
-                    dist = math.hypot(cx - car.tracks[-1][0], cy - car.tracks[-1][1])
-                    if dist<25:
+                    # dist = math.hypot(cx - car.tracks[-1][0], cy - car.tracks[-1][1])
+                    if ok:
                         new = False
                         car.updateCoord(x, y, w, h)
                         car.age_plus()

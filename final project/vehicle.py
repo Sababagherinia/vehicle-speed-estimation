@@ -12,7 +12,7 @@ class Car:
         self.done = False
         self.age = 1
         self.min_age = min_age
-        # self.tracker = cv2.legacy
+        self.tracker = cv2.TrackerKCF_create()
         # self.state = '0'
 
     def getId(self):
