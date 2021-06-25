@@ -1,5 +1,5 @@
 import cv2
-import cvlib as cv
+# import cvlib as cv
 import vehicle
 import numpy as np
 import math
@@ -22,7 +22,7 @@ def detect_cars(frame):
 def yolo_detector(frame):
     bbox, label, conf = cv.detect_common_objects(frame)
     detection = []
-    for i in len(bbox):
+    for i in range(len(bbox)):
         if label[i] == 'car' and conf[i] >= 0.92:
             detection.append(bbox[i])
     return detection
@@ -34,16 +34,17 @@ def detector_subtract(frame):
     mask = cv2.GaussianBlur(frame, (11, 11), 0)
     mask = cv2.GaussianBlur(mask, (11, 11), 0)
     mask = cv2.GaussianBlur(mask, (21, 21), 0)
-    mask = object_detector.apply(mask)
+    mask = object_detector.apply(mask, 1)
     _, mask = cv2.threshold(mask, 254, 255, cv2.THRESH_BINARY)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernelop)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernelcl)
     mask = cv2.dilate(mask, (9, 9), 2)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    mask = cv2.dilate(mask, (9, 9), 2)
+    _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     detection = []
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area > 400:
+        if area > 600 and area < 10000:
             x, y, w, h = cv2.boundingRect(cnt)
 
             detection.append([x, y, w, h])
@@ -57,6 +58,7 @@ def real_time():
     cars = []
     min_age = 5
     count = 0
+    min_speed = 80
     FONT = cv2.FONT_HERSHEY_COMPLEX_SMALL
     # looping through video
     while cap.isOpened():
@@ -76,37 +78,45 @@ def real_time():
         # num_of_cars = len(cars)
         # print(num_of_cars)
         # Detection
-        # detected, mask = detector_subtract(frame)
+        detected, mask = detector_subtract(frame)
         # detected = detect_cars(frame)
-        detected = yolo_detector(frame)
+        # detected = yolo_detector(frame)
         for item in detected:
             x, y, w, h = item
-            bb = [x, y, x+w, y+h]
+            bb = [x, y, w, h]
             cx, cy = get_center(x, y, w, h)
             new = True
-            if y in range(down_limit, up_limit):
+            if y in range(down_limit, up_limit + 20):
                 for car in cars:
                     # Tracking
                     ok, bbox = car.tracker.update(frame)
-                    # print(car.id)
+                    print(car.id)
+                    bbox = list(map(int, bbox))
+                    print(bbox, ok)
                     # dist = math.hypot(cx - car.tracks[-1][0], cy - car.tracks[-1][1])
                     if ok:
                         new = False
-                        car.updateCoord(x, y, w, h)
-                        car.age_plus()
+                        car.updateCoord(x, y, w+x, h+y)
 
-                        if car.age > car.min_age and car.is_moving():
+                        if car.is_moving():
                             # print(car.id, car.tracks[-2][1])
-                            cv2.rectangle(frame, (x, y), (w, h), color=(0, 255, 0), thickness=2)
-                            cv2.putText(frame, str(car.id), (x, y + 5), FONT, 1, (0, 0, 255))
-                            # print(car.getY(), up_limit)
+                            if car.speed > min_speed:
+                                cv2.rectangle(frame, (x, y), (x+w, y+h),
+                                              color=(0, 0, 255), thickness=2)
+                                cv2.putText(frame, str(car.speed), (x, y + 5), FONT, 1, (0, 0, 255))
+                                if not car.counted:
+                                    count += 1
+                            else:
+                                cv2.rectangle(frame, (x, y), (x+w, y+h), color=(0, 255, 0), thickness=2)
+                                cv2.putText(frame, str(car.speed), (x, y + 5), FONT, 1, (0, 0, 255))
+
                     if not car.done:
                         if len(car.tracks) >= 2 and car.tracks[-1][1] >= up_limit >= car.tracks[-2][1]:
                             car.setDone()
-                            frame = cv2.line(frame, (0, up_limit), (frame.shape[1], up_limit), (0, 0, 255)
-                                             , thickness=2)
-                            count += 1
-                            print("done", car.id)
+                            # frame = cv2.line(frame, (0, up_limit), (frame.shape[1], up_limit), (0, 0, 255)
+                            #                  , thickness=2)
+                            # count += 1
+                            # print("done", car.id)
                     if car.done:
                         if y > up_limit:
                             i = cars.index(car)
@@ -114,13 +124,13 @@ def real_time():
                             del car
 
                 if new:
-                    newCar = vehicle.Car(pid, x, y, min_age)
-                    newCar.tracker.init(frame, bb)
+                    newCar = vehicle.Car(pid, x, y, min_age, up_limit, down_limit)
+                    newCar.tracker.init(frame, tuple(bb))
                     cars.append(newCar)
                     pid += 1
         # Display
         cv2.putText(frame, f"OUT:{count}", (50, 40), FONT, 1, (0, 255, 0), 1)
-        # cv2.imshow('mask', mask)
+        cv2.imshow('mask', mask)
         cv2.imshow('frame', frame)
         if cv2.waitKey(40) & 0xFF == ord('q'):
             break
