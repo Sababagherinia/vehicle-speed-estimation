@@ -65,7 +65,7 @@ class Car:
         self.age += 1
         if self.age >= self.min_age:
             if not self.t1:
-                self.t1 = time.time()
+                self.t1 = datetime.datetime.now()
         return True
 
     def is_moving(self):

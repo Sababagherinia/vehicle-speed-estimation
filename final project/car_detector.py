@@ -44,7 +44,7 @@ def detector_subtract(frame):
     detection = []
     for cnt in contours:
         area = cv2.contourArea(cnt)
-        if area > 600 and area < 10000:
+        if area > 600:
             x, y, w, h = cv2.boundingRect(cnt)
 
             detection.append([x, y, w, h])
@@ -69,14 +69,10 @@ def real_time():
         h, w, _ = frame.shape
         up_limit = int(h/1.5)
         down_limit = 100
-        measure_line = (down_limit + up_limit)/2
         roi = frame[100:int(h/1.5), :, :]
         frame = cv2.line(frame, (0, 100), (frame.shape[1], 100), (0, 255, 0), thickness=2)
         frame = cv2.line(frame, (0, up_limit), (frame.shape[1], up_limit), (0, 255, 0)
                          , thickness=2)
-        # cars, cars_frame = detect_cars(roi)
-        # num_of_cars = len(cars)
-        # print(num_of_cars)
         # Detection
         detected, mask = detector_subtract(frame)
         # detected = detect_cars(frame)
@@ -92,14 +88,11 @@ def real_time():
                     ok, bbox = car.tracker.update(frame)
                     print(car.id)
                     bbox = list(map(int, bbox))
-                    print(bbox, ok)
                     # dist = math.hypot(cx - car.tracks[-1][0], cy - car.tracks[-1][1])
                     if ok:
                         new = False
                         car.updateCoord(x, y, w+x, h+y)
-
                         if car.is_moving():
-                            # print(car.id, car.tracks[-2][1])
                             if car.speed > min_speed:
                                 cv2.rectangle(frame, (x, y), (x+w, y+h),
                                               color=(0, 0, 255), thickness=2)
@@ -122,7 +115,6 @@ def real_time():
                             i = cars.index(car)
                             cars.pop(i)
                             del car
-
                 if new:
                     newCar = vehicle.Car(pid, x, y, min_age, up_limit, down_limit)
                     newCar.tracker.init(frame, tuple(bb))
@@ -140,6 +132,5 @@ def real_time():
 
 
 if __name__ == '__main__':
-    # count = 0
     real_time()
     print("finish")
