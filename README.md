@@ -12,8 +12,8 @@ and start detecting
 we tried three different approches to achieve this goal
 ### Haarcascade Classifier
 a method which uses **viola-jones** algorithm to detect objects and is provided by **cv2.CascadeClassifier()** method and it needs some computed weights in form of .xml file which is
-provided by name the function written to apply that is called **detect_cars**  **haarcascade_car.xml** here to detect vehicles **although due to being a very old and inaccurate method to detect objects it didn't give very good result and thus
-we moved on to next method**
+provided by name the function written to apply that is called **detect_cars**  **haarcascade_car.xml** here to detect vehicles ****although due to being a very old and inaccurate method to detect objects it didn't give very good result and thus
+we moved on to next method***
 ### Background Subtraction
 the second method which is provided by **cv2.createBackgroundSubtractorMOG2()** is method that takes a series of consecutive frames and subtract the background from moving objects.
 **detector_subtract** function after getting the subtracted mask and applying some preprocessing and post processing on that returns the desired moving objects from the extracted contours
